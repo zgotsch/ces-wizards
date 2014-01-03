@@ -1,0 +1,42 @@
+<!DOCTYPE html PUBLIC "->
+<html>
+<head>
+<script type="text/javascript" src="static/bundle.js"></script>
+<style>
+  body {
+    background-color: darkgrey;
+  }
+  #button-container {
+    width: 200px;
+    float: right;
+    text-align: right;
+  }
+  textarea#entities {
+    width: 100%;
+  }
+  #canvas-container {
+    float: left;
+  }
+</style>
+<script>
+  window.onload = function() {
+    window.canvas = document.createElement("canvas");
+    canvas.width = 500;
+    canvas.height = 760;
+    canvas.oncontextmenu = function() { return false; };
+
+    document.getElementById("canvas-container").appendChild(canvas);
+
+    engine = createEngine(canvas);
+  };
+</script>
+</head>
+<body>
+  <div id="button-container">
+    <button onclick="engine.reset()">Reset engine</button>
+    <br />
+  </div>
+  <div id="canvas-container">
+  </div>
+</body>
+</html>

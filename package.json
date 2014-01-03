@@ -1,0 +1,10 @@
+{
+    "name": "coffee-ces",
+    "dependencies": {
+        "underscore": "1.5.x"
+    },
+    "scripts": {
+        "watch": "watchify src/demo.coffee -o static/bundle.js --debug -v -t coffeeify",
+        "build": "browserify src/demo.coffee -t coffeeify | uglifyjs > static/bundle.js"
+    }
+}
