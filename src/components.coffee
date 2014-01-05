@@ -39,12 +39,16 @@ class Lifetime
     constructor: (@lifetime = 10) ->
 
 class Player
+class Enemy
 
 class MoveTowardPlayer
     constructor: (@speed = 10) ->
 
 class Collision
     constructor: (@shouldCollide = (-> true), @didCollide = (->), @boundingBoxSize = [50, 50]) ->
+
+class Spellcaster
+    constructor: (@spells) ->
 
 exports.Position = Position
 exports.StaticSprite = StaticSprite
@@ -59,3 +63,5 @@ exports.Lifetime = Lifetime
 exports.Player = Player
 exports.MoveTowardPlayer = MoveTowardPlayer
 exports.Collision = Collision
+exports.Spellcaster = Spellcaster
+exports.Enemy = Enemy

@@ -1,9 +1,7 @@
 _ = require 'underscore'
 Engine = require './engine.coffee'
-Input = require './input.coffee'
 Renderer = require './renderer.coffee'
 Resources = require './resources.coffee'
-system = require './system.coffee'
 components = require './components.coffee'
 vecutil = require './vecutil.coffee'
 
@@ -14,6 +12,7 @@ PhysicsSystem = require './systems/physics.coffee'
 LifetimeSystem = require './systems/lifetime.coffee'
 MoveTowardPlayerSystem = require './systems/moveTowardPlayer.coffee'
 CollisionSystem = require './systems/collision.coffee'
+SpellcastingSystem = require './systems/spellcasting.coffee'
 
 createEnemy = (position) ->
     enemyShouldCollide = (me, them) ->
@@ -24,17 +23,17 @@ createEnemy = (position) ->
 
     engine.createEntity [
         new components.Position(position),
-        new components.ColorBox(),
+        new components.ColorBox([50, 50], 'magenta'),
         new components.Velocity(),
         new components.MoveTowardPlayer(10),
-        new components.Collision(enemyShouldCollide, enemyDidCollide)
+        new components.Collision(enemyShouldCollide, enemyDidCollide),
+        new components.Enemy()
     ]
 
 engineTick = (dt) ->
     if Math.random() < dt and Math.random() < 0.5
         pos = vecutil.alongPerimeter [[0, 0], vecutil.sub2d([canvas.width, canvas.height], [20, 20])], Math.random()
         createEnemy pos
-    CollisionSystem.drawQuadTreeNode renderer.ctx, collisionSystem.quadTree.root
 
 createEngine = (canvas) ->
     window.canvas = canvas #deleteme
@@ -52,6 +51,7 @@ createEngine = (canvas) ->
     engine.addSystem(new StopAfterSystem())
     engine.addSystem(new LifetimeSystem())
     engine.addSystem(new MoveTowardPlayerSystem())
+    engine.addSystem(new SpellcastingSystem())
     window.collisionSystem = new CollisionSystem([canvas.width, canvas.height])
     engine.addSystem(collisionSystem)
 
@@ -97,6 +97,32 @@ createEngine = (canvas) ->
         #     new components.Velocity(),
         #     new components.Lifetime(10)
         # ]
+        
+        class Spell
+            constructor: (components) ->
+                @entity = engine.createEntity components
+
+        class Fireball extends Spell
+            constructor: (caster, target) ->
+                speed = 300
+                vector = vecutil.sub2d target, caster.components.position.pos
+                vector = vecutil.scaleTo vector, speed
+
+
+                shouldCollide = (me, them) ->
+                    _.has them.components, 'enemy'
+
+                didCollide = (me, them) ->
+                    me.destroy()
+                    them.destroy()
+
+                super [
+                    new components.Position(caster.components.position.pos.slice(0)),
+                    new components.ColorBox([20, 20], 'red'),
+                    new components.Velocity(vector),
+                    new components.Collision(shouldCollide, didCollide, [20, 20]),
+                    new components.Lifetime(5)
+                ]
 
         player = engine.createEntity [
             new components.Position([canvas.width / 2, canvas.height / 2]),
@@ -104,7 +130,8 @@ createEngine = (canvas) ->
             new components.Velocity(),
             new components.PlayerControl(),
             new components.Player(),
-            new components.Collision()
+            new components.Collision(),
+            new components.Spellcaster([Fireball])
         ]
 
     Resources.load ['resources/sun.gif', 'resources/dragonsprites.gif']

@@ -21,6 +21,7 @@ Input = do ->
     document.addEventListener 'blur', -> keys = {}
 
     mouse = {
+        isDown: false,
         pos: [0, 0],
         posRelativeTo: (element) ->
             rect = element.getBoundingClientRect()
@@ -30,6 +31,8 @@ Input = do ->
     document.addEventListener 'mousemove', (e) ->
         mouse.pos[0] = e.x
         mouse.pos[1] = e.y
+    document.addEventListener 'mousedown', (e) -> mouse.isDown = true
+    document.addEventListener 'mouseup', (e) -> mouse.isDown = false
 
     {
         isDown: (key) -> keys[key.toUpperCase()],

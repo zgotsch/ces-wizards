@@ -39,8 +39,9 @@ class Engine
     removeDeadEntities: ->
         for id, entity of @entities
             if entity.components.destroy?
+                entity.components = null
+                system.updateCache entity for system in @systems
                 delete @entities[id]
-                system.updateCache id, null for system in @systems
 
     start: ->
         @running = true
@@ -67,6 +68,8 @@ class Engine
             @tick dt
             @removeDeadEntities()
             @afterTick?(dt)
+
+            renderer.ctx.strokeText Object.keys(@entities).length, 400, 100
 
         @rafId = requestAnimationFrame @gameLoop if @running
 

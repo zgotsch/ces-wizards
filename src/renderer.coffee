@@ -100,4 +100,10 @@ class Renderer
             @framerates.shift()
         drawFramerate()
 
+    drawQuadTreeNode: (node) ->
+        @drawQuadTreeNode n for n in node.nodes
+        rect = node.rect
+        @ctx.strokeRect rect.x, rect.y, rect.width, rect.height
+        @ctx.strokeText node.children.length, rect.x + rect.width/2, rect.y + rect.height/2
+
 module.exports = Renderer

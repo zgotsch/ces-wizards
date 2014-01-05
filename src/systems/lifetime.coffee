@@ -7,6 +7,6 @@ class LifetimeSystem extends system.BasicSystem
     action: (entity, dt) ->
         entity.components.lifetime.lifetime -= dt
         if entity.components.lifetime.lifetime <= 0
-            entity.destroy = true
+            entity.destroy()
 
 module.exports = LifetimeSystem

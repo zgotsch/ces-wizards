@@ -3,12 +3,6 @@ QuadTree = require '../quadtree.coffee'
 system = require('../system.coffee')
 vecutil = require '../vecutil.coffee'
 
-drawQuadTreeNode = (ctx, node) ->
-    drawQuadTreeNode(ctx, n) for n in node.nodes
-    rect = node.rect
-    ctx.strokeRect rect.x, rect.y, rect.width, rect.height
-    ctx.strokeText node.children.length, rect.x + rect.width/2, rect.y + rect.height/2
-
 makeQuadTreeItem = (entity) ->
     {
         x: entity.components.position.pos[0],
@@ -26,30 +20,53 @@ class CollisionSystem extends system.BasicSystem
             x: 0, y: 0, width: @canvasSize[0], height: @canvasSize[1]
         }, 5, 10)
 
-    action: (entity, dt, entities) ->
-            position = entity.components.position
-            collision = entity.components.collision
+        @shouldDrawQuadTree = false
+        @shouldDrawCollisionBoxes = false
+        document.addEventListener 'keypress', (e) =>
+            e.key ?= String.fromCharCode e.charCode
+            switch e.key
+                when "q" then @shouldDrawQuadTree = !@shouldDrawQuadTree
+                when "c" then @shouldDrawCollisionBoxes =
+                    !@shouldDrawCollisionBoxes
 
-            for item in @quadTree.retrieve({
-                x: position.pos[0],
-                y: position.pos[1],
-                width: collision.boundingBoxSize[0],
-                height: collision.boundingBoxSize[1]
-            })
-                otherEntity = entities[item.id]
-                if otherEntity.id != entity.id
-                    if vecutil.rectIntersect(
-                        [position.pos, collision.boundingBoxSize],
-                        [otherEntity.components.position.pos,
-                         otherEntity.components.collision.boundingBoxSize]
-                    )
-                        if collision.shouldCollide entity, otherEntity
-                            collision.didCollide entity, otherEntity
+    action: (entity, dt, entities) ->
+        position = entity.components.position
+        collision = entity.components.collision
+
+        didCollide = false
+        for item in @quadTree.retrieve({
+            x: position.pos[0],
+            y: position.pos[1],
+            width: collision.boundingBoxSize[0],
+            height: collision.boundingBoxSize[1]
+        })
+            otherEntity = entities[item.id]
+            if otherEntity.id != entity.id
+                if vecutil.rectIntersect(
+                    [position.pos, collision.boundingBoxSize],
+                    [otherEntity.components.position.pos,
+                        otherEntity.components.collision.boundingBoxSize]
+                )
+                    didCollide = true
+                    if collision.shouldCollide entity, otherEntity
+                        collision.didCollide entity, otherEntity
+
+        @drawCollisionBox entity, didCollide if @shouldDrawCollisionBoxes
 
     run: (entities, dt) ->
         @quadTree.clear()
         @quadTree.insert makeQuadTreeItem(entities[i]) for i in _.keys(@cache)
         super entities, dt
+        @drawQuadTree() if @shouldDrawQuadTree
+
+    drawQuadTree: ->
+        renderer.drawQuadTreeNode @quadTree.root
+
+    drawCollisionBox: (entity, colliding) ->
+        renderer.ctx.save()
+        renderer.ctx.setStrokeColor(if colliding then 'red' else 'green')
+        renderer.ctx.strokeRect entity.components.position.pos...,
+                                entity.components.collision.boundingBoxSize...
+        renderer.ctx.restore()
 
 module.exports = CollisionSystem
-module.exports.drawQuadTreeNode = drawQuadTreeNode
