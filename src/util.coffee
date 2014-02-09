@@ -9,6 +9,14 @@ average = (list) ->
 keyForComponent = (component) ->
     component.constructor.name.toLowerCase()
 
+rotateArray = (arr, offset) ->
+    newArr = arr.slice()
+    for x, i in arr
+        index = (i + arr.length + offset) % arr.length
+        newArr[index] = x
+    newArr
+
 exports.sum = sum
 exports.average = average
 exports.keyForComponent = keyForComponent
+exports.rotateArray = rotateArray

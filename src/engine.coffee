@@ -48,6 +48,9 @@ class Engine
         @lastFrameTime = null
         requestAnimationFrame @gameLoop
 
+    stop: -> 
+        @running = false
+
     reset: ->
         # Not sure if the cancel and rerequest is necessary, otherwise it's
         # sufficient to just reset @entities

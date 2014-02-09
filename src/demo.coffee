@@ -18,8 +18,11 @@ createEnemy = (position) ->
     enemyShouldCollide = (me, them) ->
         _.has them.components, 'player'
 
-    enemyDidCollide = (me, them) ->
+    enemyDidCollide = _.throttle (me, them) ->
         me.components.colorbox.color = 'green'
+        if _.has them.components, 'health'
+            them.components.health.hp -= 1
+    , 100, {trailing: false}
 
     engine.createEntity [
         new components.Position(position),
@@ -45,6 +48,8 @@ createEngine = (canvas) ->
     engine.beforeTick = renderer.clearCanvas
     engine.afterTick = renderer.drawFramerate
 
+    window.collisionSystem = new CollisionSystem([canvas.width, canvas.height])
+    engine.addSystem(collisionSystem)
     engine.addSystem(new PhysicsSystem())
     engine.addSystem(new PlayerControlSystem())
     engine.addSystem(new SpriteTurningSystem())
@@ -52,8 +57,6 @@ createEngine = (canvas) ->
     engine.addSystem(new LifetimeSystem())
     engine.addSystem(new MoveTowardPlayerSystem())
     engine.addSystem(new SpellcastingSystem())
-    window.collisionSystem = new CollisionSystem([canvas.width, canvas.height])
-    engine.addSystem(collisionSystem)
 
     Resources.onReady ->
         engine.start()
@@ -99,15 +102,30 @@ createEngine = (canvas) ->
         # ]
         
         class Spell
-            constructor: (components) ->
-                @entity = engine.createEntity components
+            constructor: (@iconUrl, @castDelay) ->
+                @timer = @castDelay
+
+            update: (dt) ->
+                @timer += dt
+
+            canCast: ->
+                @timer >= @castDelay
+
+            didCast: ->
+                @timer = 0
+
 
         class Fireball extends Spell
-            constructor: (caster, target) ->
+            constructor: ->
+                super 'resources/fireball.jpeg', 10
+
+            cast: (caster, target) =>
+                if !@canCast()
+                    return
+
                 speed = 300
                 vector = vecutil.sub2d target, caster.components.position.pos
                 vector = vecutil.scaleTo vector, speed
-
 
                 shouldCollide = (me, them) ->
                     _.has them.components, 'enemy'
@@ -116,13 +134,14 @@ createEngine = (canvas) ->
                     me.destroy()
                     them.destroy()
 
-                super [
+                engine.createEntity [
                     new components.Position(caster.components.position.pos.slice(0)),
                     new components.ColorBox([20, 20], 'red'),
                     new components.Velocity(vector),
                     new components.Collision(shouldCollide, didCollide, [20, 20]),
                     new components.Lifetime(5)
                 ]
+                @didCast()
 
         player = engine.createEntity [
             new components.Position([canvas.width / 2, canvas.height / 2]),
@@ -130,11 +149,13 @@ createEngine = (canvas) ->
             new components.Velocity(),
             new components.PlayerControl(),
             new components.Player(),
+            new components.Health(25, 25),
             new components.Collision(),
-            new components.Spellcaster([Fireball])
+            new components.Spellcaster([new Fireball()])
         ]
 
-    Resources.load ['resources/sun.gif', 'resources/dragonsprites.gif']
+    Resources.load ['resources/sun.gif', 'resources/dragonsprites.gif',
+                    'resources/fireball.jpeg']
 
     return engine
 

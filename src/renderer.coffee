@@ -2,6 +2,7 @@ _ = require 'underscore'
 Resources = require './resources.coffee'
 system = require './system.coffee'
 util = require './util.coffee'
+vecutil = require './vecutil.coffee'
 
 class Renderer
     constructor: (canvas) ->
@@ -70,10 +71,65 @@ class Renderer
                               colorbox.size[0], colorbox.size[1])
                 @ctx.restore()
 
+        class UIRenderingSystem extends system.BasicSystem
+            constructor: (@ctx, @canvasSize) ->
+                super ['player', 'health', 'spellcaster']
+
+            action: (entity) ->
+                health = entity.components.health
+                maxWidth = 200
+                height = 20
+
+                @ctx.save()
+                @ctx.setFillColor "red"
+                @ctx.fillRect 0, 0, maxWidth * health.hp / health.maxHp, height
+
+                # draw spell icons
+                spellcaster = entity.components.spellcaster
+
+                spellIconSize = [50, 50]
+                spellIconY = @canvasSize[1] - spellIconSize[1]
+                for spell, i in spellcaster.spells
+                    topLeft = [i * spellIconSize[0], spellIconY]
+                    @ctx.drawImage Resources.get('resources/fireball.jpeg'),
+                        topLeft...,
+                        spellIconSize...
+                    # draw clock
+                    if !spell.canCast()
+                        centerTop = vecutil.add2d topLeft, [spellIconSize[0]/2, 0]
+                        center = vecutil.add2d topLeft, [spellIconSize[0]/2
+                                                         spellIconSize[1]/2]
+                        corners = vecutil.rectCorners topLeft, spellIconSize...
+                        corners = util.rotateArray corners, -1
+                        completion = spell.timer / spell.castDelay
+                        theta = Math.TAU * completion - Math.TAU/8
+                        cornersIndex = Math.floor((theta) / (Math.TAU / 4)) + 1
+                        #correct completion to be from upper left
+                        completion = (completion + 1/8) % 1.0
+                        intersectPoint = vecutil.alongPerimeter(
+                            [topLeft, spellIconSize], completion)
+
+                        vecutil.polygon(@ctx, centerTop, center, intersectPoint,
+                                        corners.slice(cornersIndex)...)
+                        @ctx.setFillColor(0, 0, 0, .5)
+                        @ctx.fill()
+
+                # highlight active
+                @ctx.setLineWidth 2
+                @ctx.setStrokeColor 'white'
+                @ctx.strokeRect spellcaster.active * spellIconSize[0],
+                               spellIconY,
+                               spellIconSize...
+
+                @ctx.restore()
+
+
         @system = new system.CompsiteSystem(
             new StaticRenderingSystem(@ctx),
             new AnimatedRenderingSystem(@ctx),
-            new ColorBoxRenderingSystem(@ctx))
+            new ColorBoxRenderingSystem(@ctx),
+            new UIRenderingSystem(@ctx, [canvas.width, canvas.height])
+        )
 
         @clearCanvas = (dt) =>
             @ctx.fillStyle = "lightgrey"

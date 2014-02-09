@@ -43,13 +43,26 @@ alongPerimeter = (rect, along) ->
     else if along < width + height
         [x + width, y + along - width]
     else if along < 2 * width + height
-        [x + along - (width + height), y + height]
+        [width - (x + along - (width + height)), y + height]
     else
-        [x, y + along - 2 * width - height]
+        [x, y + (height - (along - 2 * width - height))]
 
 rectIntersect = (rect1, rect2) ->
     (Math.abs(rect1[0][0] + rect1[1][0]/2 - rect2[0][0] - rect2[1][0]/2) * 2 < (rect1[1][0] + rect2[1][0])) and
         (Math.abs(rect1[0][1] + rect1[1][1]/2 - rect2[0][1] - rect2[1][1]/2) * 2 < (rect1[1][1] + rect2[1][1]))
+
+polygon = (ctx, points...) ->
+    ctx.beginPath()
+    ctx.moveTo points[0]...
+    for point in points.slice(1)
+        ctx.lineTo point...
+    ctx.closePath()
+
+rectCorners = (topLeft, width, height) ->
+    [topLeft,
+     add2d(topLeft, [width, 0]),
+     add2d(topLeft, [width, height]),
+     add2d(topLeft, [0, height])]
 
 exports.magnitude = magnitude
 exports.normalize = normalize
@@ -62,3 +75,5 @@ exports.direction = direction
 exports.angleOfIncidence = angleOfIncidence
 exports.alongPerimeter = alongPerimeter
 exports.rectIntersect = rectIntersect
+exports.polygon = polygon
+exports.rectCorners = rectCorners

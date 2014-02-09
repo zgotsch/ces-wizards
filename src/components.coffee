@@ -49,6 +49,10 @@ class Collision
 
 class Spellcaster
     constructor: (@spells) ->
+        @active = 0
+
+class Health
+    constructor: (@hp, @maxHp) ->
 
 exports.Position = Position
 exports.StaticSprite = StaticSprite
@@ -65,3 +69,4 @@ exports.MoveTowardPlayer = MoveTowardPlayer
 exports.Collision = Collision
 exports.Spellcaster = Spellcaster
 exports.Enemy = Enemy
+exports.Health = Health
